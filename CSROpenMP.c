@@ -1,19 +1,24 @@
 #include "CSR.h"
-#include <sys/time.h>
-double* multiplication(struct CSR matrix, double* x, int row_size){
+#include <omp.h>
+double* multiplication(struct CSR matrix, double* x, int row_size, int thread_number){
+  double start, end;
+  int i=0,k=0;
   double* result = malloc(row_size*sizeof(double));
-  for(int i = 0; i < row_size; i++){
+  for(i = 0; i < row_size; i++){
     result[i] = 0;
   }
-  struct timeval start, end;
-  gettimeofday(&start, NULL); 
-  for(int i = 0; i < row_size; i++){
-    for(int k = matrix.row_offset[i]; k < matrix.row_offset[i+1]; k++){
-      result[i] += matrix.value[k]*x[matrix.column[k]];
+  omp_set_dynamic(0);
+  omp_set_num_threads(thread_number);
+  start = omp_get_wtime();
+  #pragma omp parallel for private(i,k) shared(matrix)
+    for(i = 0; i < row_size; i++){
+      for(k = matrix.row_offset[i]; k < matrix.row_offset[i+1]; k++){
+        result[i] += matrix.value[k]*x[matrix.column[k]];
+      }
     }
-  }
-  gettimeofday(&end, NULL);
-  printf("Time of computation: %lf microseconds\n", end.tv_sec-start.tv_sec + (end.tv_usec-start.tv_usec)/1000000.0);
+  
+  end = omp_get_wtime();
+  printf("Time of computation: %f seconds\n", (end-start)/10);
   return result;
 }
 
@@ -47,9 +52,9 @@ int main(int argc, char *argv[]){
   }
 
   for(int i = 1; i <= ITERATIONS; i++){
-    x = multiplication(_matrix, x, _row_size);
+    x = multiplication(_matrix, x, _row_size, NUMBER_THREADS);
     char outfile_name[256];
-    sprintf(outfile_name, "CSRVecseq%d", i);
+    sprintf(outfile_name, "CSRVecopenmp%d", i);
     FILE *fp;
     fp = fopen(outfile_name, "w");
     for(int k = 0; k < _row_size; k++)
