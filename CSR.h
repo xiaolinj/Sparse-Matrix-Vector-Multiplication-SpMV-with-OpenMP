@@ -12,6 +12,15 @@ struct CSR
   int* row_offset;
 }CSR;
 
+void printMatrix(struct CSR matrix, int valid_size){
+  for(int i = 0; i < valid_size; i++)
+    printf("%lf ", matrix.value[i]);
+  for(int i = 0; i < valid_size; i++)
+    printf("%d ", matrix.column[i]);
+  for(int i = 0; i <= matrix.row_size; i++)
+    printf("%d ", matrix.row_offset[i]);
+}
+
 struct CSR convertCSR(char* filename)
 {
 
@@ -37,13 +46,13 @@ struct CSR convertCSR(char* filename)
   int offset = 0;
   while(fgets(line, sizeof(line), fp) && line_number < matrix.valid_size+1) {
     sscanf(line, "%d %d %lf", &i, &j, &value);
-    if(i > prev){
+    if(i-1 > prev){
       offset = line_number-1;
       matrix.row_offset[row_index] = offset;
       row_index++;
-      prev = i;
+      prev = i-1;
     }
-    matrix.column[line_number-1] = j;
+    matrix.column[line_number-1] = j-1;
     matrix.value[line_number-1] = value;
     line_number++;
   }

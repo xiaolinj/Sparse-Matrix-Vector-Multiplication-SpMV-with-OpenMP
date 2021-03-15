@@ -1,25 +1,24 @@
 #include "CSC.h"
+#include <sys/time.h>
+
 double* multiplication(struct CSC matrix, double* x, int column_size){
   double* result = malloc(column_size*sizeof(double));
   for(int i = 0; i < column_size; i++){
     result[i] = 0;
   }
+  struct timeval start, end;
+  gettimeofday(&start, NULL); 
   for(int i = 0; i < column_size; i++){
     for(int k = matrix.column_offset[i]; k < matrix.column_offset[i+1]; k++){
       result[matrix.row[k]] += matrix.value[k]*x[i];
     }
   }
+  gettimeofday(&end, NULL);
+  printf("Time of computation: %lf microseconds\n", end.tv_sec-start.tv_sec + (end.tv_usec-start.tv_usec)/1000000.0);
   return result;
 }
 
-void printMatrix(struct CSC matrix, int valid_size){
-  for(int i = 0; i < valid_size; i++)
-    printf("%lf ", matrix.value[i]);
-  for(int i = 0; i < valid_size; i++)
-    printf("%d ", matrix.row[i]);
-  for(int i = 0; i <= matrix.row_size; i++)
-    printf("%d ", matrix.column_offset[i]);
-}
+
 
 int main(int argc, char *argv[]){
   //./spmv matrix.rft m n
@@ -33,8 +32,8 @@ int main(int argc, char *argv[]){
   filename = argv[1];
   ITERATIONS = atoi(argv[2]);
   NUMBER_THREADS = atoi(argv[3]);
-  struct CSC _matrix = convertCSC(filename);
-  //printMatrix(_matrix, _matrix.valid_size);
+
+  struct CSC _matrix = LinkedCSC(filename);
 
   int _column_size = _matrix.column_size;
   double* x = malloc(_matrix.column_size*sizeof(double));
@@ -45,7 +44,7 @@ int main(int argc, char *argv[]){
   for(int i = 1; i <= ITERATIONS; i++){
     x = multiplication(_matrix, x, _column_size);
     char outfile_name[256];
-    sprintf(outfile_name, "CSC2Vec%d", i);
+    sprintf(outfile_name, "CSCVec%d", i);
     FILE *fp;
     fp = fopen(outfile_name, "w");
     for(int k = 0; k < _column_size; k++)

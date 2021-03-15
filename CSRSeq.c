@@ -17,15 +17,6 @@ double* multiplication(struct CSR matrix, double* x, int row_size){
   return result;
 }
 
-void printMatrix(struct CSR matrix, int valid_size){
-  for(int i = 0; i < valid_size; i++)
-    printf("%lf ", matrix.value[i]);
-  for(int i = 0; i < valid_size; i++)
-    printf("%d ", matrix.column[i]);
-  for(int i = 0; i <= matrix.row_size; i++)
-    printf("%d ", matrix.row_offset[i]);
-}
-
 int main(int argc, char *argv[]){
   //./spmv matrix.rft m n
   if(argc != 4){
