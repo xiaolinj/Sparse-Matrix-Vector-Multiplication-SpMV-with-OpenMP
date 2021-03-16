@@ -3,6 +3,7 @@
 double* multiplication(struct CSR matrix, double* x, int row_size, int thread_number){
   double start, end;
   int i=0,k=0;
+  double sum = 0;
   double* result = malloc(row_size*sizeof(double));
   for(i = 0; i < row_size; i++){
     result[i] = 0;
@@ -10,11 +11,13 @@ double* multiplication(struct CSR matrix, double* x, int row_size, int thread_nu
   omp_set_dynamic(0);
   omp_set_num_threads(thread_number);
   start = omp_get_wtime();
-  #pragma omp parallel for private(i,k) shared(matrix)
+  #pragma omp parallel for private(i,k,sum) shared(matrix)
     for(i = 0; i < row_size; i++){
+      sum = 0;
       for(k = matrix.row_offset[i]; k < matrix.row_offset[i+1]; k++){
-        result[i] += matrix.value[k]*x[matrix.column[k]];
+        sum += matrix.value[k]*x[matrix.column[k]];
       }
+      result[i] = sum;
     }
   
   end = omp_get_wtime();
@@ -45,7 +48,7 @@ int main(int argc, char *argv[]){
   for(int i = 1; i <= ITERATIONS; i++){
     x = multiplication(_matrix, x, _row_size, NUMBER_THREADS);
     char outfile_name[256];
-    sprintf(outfile_name, "CSRVecopenmp%d", i);
+    sprintf(outfile_name, "CSROpenMPVec%d.txt", i);
     FILE *fp;
     fp = fopen(outfile_name, "w");
     for(int k = 0; k < _row_size; k++)

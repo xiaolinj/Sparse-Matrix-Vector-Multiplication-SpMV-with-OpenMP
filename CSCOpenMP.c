@@ -1,20 +1,29 @@
 #include "CSC.h"
-#include <sys/time.h>
+#include <omp.h>
 
-double* multiplication(struct CSC matrix, double* x, int column_size){
+
+double* multiplication(struct CSC matrix, double* x, int column_size, int thread_number){
+  double start, end;
   double* result = malloc(column_size*sizeof(double));
+  int i=0, k=0;
+  double multiplier = 0;
   for(int i = 0; i < column_size; i++){
     result[i] = 0;
   }
-  struct timeval start, end;
-  gettimeofday(&start, NULL); 
-  for(int i = 0; i < column_size; i++){
-    for(int k = matrix.column_offset[i]; k < matrix.column_offset[i+1]; k++){
-      result[matrix.row[k]] += matrix.value[k]*x[i];
+  omp_set_dynamic(0);
+  omp_set_num_threads(thread_number);
+  start = omp_get_wtime();
+  
+  
+  for(i = 0; i < column_size; i++){
+    multiplier = x[i];
+    #pragma omp parallel for private(k) shared(matrix)
+    for(k = matrix.column_offset[i]; k < matrix.column_offset[i+1]; k++){
+      result[matrix.row[k]] += matrix.value[k]*multiplier;
     }
   }
-  gettimeofday(&end, NULL);
-  printf("Time of computation: %lf microseconds\n", end.tv_sec-start.tv_sec + (end.tv_usec-start.tv_usec)/1000000.0);
+  end = omp_get_wtime();
+  printf("Time of computation: %f seconds\n", (end-start)/10);
   return result;
 }
 
@@ -42,9 +51,9 @@ int main(int argc, char *argv[]){
   }
 
   for(int i = 1; i <= ITERATIONS; i++){
-    x = multiplication(_matrix, x, _column_size);
+    x = multiplication(_matrix, x, _column_size, NUMBER_THREADS);
     char outfile_name[256];
-    sprintf(outfile_name, "CSCVec%d.txt", i);
+    sprintf(outfile_name, "CSCOpenMPVec%d.txt", i);
     FILE *fp;
     fp = fopen(outfile_name, "w");
     for(int k = 0; k < _column_size; k++)

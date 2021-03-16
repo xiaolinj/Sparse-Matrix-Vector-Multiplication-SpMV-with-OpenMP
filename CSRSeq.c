@@ -40,7 +40,7 @@ int main(int argc, char *argv[]){
   for(int i = 1; i <= ITERATIONS; i++){
     x = multiplication(_matrix, x, _row_size);
     char outfile_name[256];
-    sprintf(outfile_name, "CSRVecseq%d", i);
+    sprintf(outfile_name, "CSRVec%d.txt", i);
     FILE *fp;
     fp = fopen(outfile_name, "w");
     for(int k = 0; k < _row_size; k++)
