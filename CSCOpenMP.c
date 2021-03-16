@@ -27,6 +27,43 @@ double* multiplication(struct CSC matrix, double* x, int column_size, int thread
   return result;
 }
 
+double* pri_multiplication(struct CSC matrix, double* x, int column_size, int thread_number){
+  double start, end;
+  double* result = malloc(column_size*sizeof(double));
+  double** temp = (double**)malloc(thread_number*sizeof(double*));
+  int i=0, k=0, tid=0, ti=0;
+  double multiplier = 0;
+  for(int i = 0; i < thread_number; i++){
+    temp[i] = malloc(column_size*sizeof(double));
+    result[i] = 0.0;
+    for(int j = 0; j < column_size; j++)
+        temp[i][j] = 0.0;
+  }
+  omp_set_dynamic(0);
+  omp_set_num_threads(thread_number);
+  start = omp_get_wtime();
+  
+  #pragma omp parallel for private(i,k) shared(matrix)
+  for(i = 0; i < column_size; i++){
+    multiplier = x[i];
+    tid = omp_get_thread_num();
+    for(k = matrix.column_offset[i]; k < matrix.column_offset[i+1]; k++){
+      temp[tid][matrix.row[k]] += matrix.value[k]*multiplier;
+    }
+    
+  }
+  //#pragma omp parallel for private(ti,i) shared(temp)
+  for(ti = 0; ti < thread_number; ti++){
+    for(i = 0; i < column_size; i++){
+        //printf("%lf", temp[ti][i]);
+        result[i] += temp[ti][i];
+    }
+  }
+  end = omp_get_wtime();
+  printf("Time of computation: %f seconds\n", (end-start)/10);
+  return result;
+}
+
 
 
 int main(int argc, char *argv[]){
